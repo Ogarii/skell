@@ -1,0 +1,61 @@
+{
+  "source": "Project Skell design notes, section 9 (hand-built, screen y down, labels swapped to anatomical sides)",
+  "convert_to_world": "x = x_pdf - 190; y = 262 - y_pdf + pelvis_height_after_grounding; z = z_pdf",
+  "nodes_anatomical": {
+    "pelvis": [
+      190,
+      262,
+      0
+    ],
+    "neck": [
+      182,
+      214,
+      -76
+    ],
+    "head": [
+      178,
+      188,
+      -90
+    ],
+    "l_elbow": [
+      224,
+      232,
+      -65
+    ],
+    "l_hand": [
+      260,
+      246,
+      -59
+    ],
+    "r_elbow": [
+      170,
+      250,
+      -104
+    ],
+    "r_hand": [
+      166,
+      284,
+      -123
+    ],
+    "l_knee": [
+      214,
+      298,
+      36
+    ],
+    "l_foot": [
+      226,
+      290,
+      89
+    ],
+    "r_knee": [
+      146,
+      258,
+      -34
+    ],
+    "r_foot": [
+      142,
+      300,
+      -69
+    ]
+  }
+}

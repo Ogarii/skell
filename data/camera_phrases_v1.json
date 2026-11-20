@@ -1,0 +1,172 @@
+{
+  "format": "camera_phrases_v1",
+  "notes": [
+    "Character-relative. Only parameters a description mentions change; the rest keep their current values.",
+    "Ambiguous descriptions (e.g. 'from the side') return camera_options with each alternative."
+  ],
+  "phrases": [
+    {
+      "phrases": [
+        "front",
+        "facing us"
+      ],
+      "set": {
+        "azimuth_rel": 0
+      }
+    },
+    {
+      "phrases": [
+        "front three-quarter left"
+      ],
+      "set": {
+        "azimuth_rel": 45
+      }
+    },
+    {
+      "phrases": [
+        "front three-quarter right"
+      ],
+      "set": {
+        "azimuth_rel": -45
+      }
+    },
+    {
+      "phrases": [
+        "left side",
+        "left profile"
+      ],
+      "set": {
+        "azimuth_rel": 90
+      }
+    },
+    {
+      "phrases": [
+        "right side",
+        "right profile"
+      ],
+      "set": {
+        "azimuth_rel": -90
+      }
+    },
+    {
+      "phrases": [
+        "back three-quarter left"
+      ],
+      "set": {
+        "azimuth_rel": 135
+      }
+    },
+    {
+      "phrases": [
+        "back three-quarter right"
+      ],
+      "set": {
+        "azimuth_rel": -135
+      }
+    },
+    {
+      "phrases": [
+        "from behind",
+        "back view"
+      ],
+      "set": {
+        "azimuth_rel": 180
+      }
+    },
+    {
+      "phrases": [
+        "eye level"
+      ],
+      "set": {
+        "elevation": 0
+      }
+    },
+    {
+      "phrases": [
+        "slightly above"
+      ],
+      "set": {
+        "elevation": 15
+      }
+    },
+    {
+      "phrases": [
+        "slightly below"
+      ],
+      "set": {
+        "elevation": -15
+      }
+    },
+    {
+      "phrases": [
+        "high angle"
+      ],
+      "set": {
+        "elevation": 30
+      }
+    },
+    {
+      "phrases": [
+        "bird's-eye",
+        "top-down",
+        "overhead"
+      ],
+      "set": {
+        "elevation": 90
+      }
+    },
+    {
+      "phrases": [
+        "low angle"
+      ],
+      "set": {
+        "elevation": -30
+      }
+    },
+    {
+      "phrases": [
+        "worm's-eye"
+      ],
+      "set": {
+        "elevation": -75
+      }
+    },
+    {
+      "phrases": [
+        "dutch",
+        "tilted"
+      ],
+      "set": {
+        "roll": 20
+      }
+    },
+    {
+      "phrases": [
+        "tilted left"
+      ],
+      "set": {
+        "roll": -20
+      }
+    },
+    {
+      "phrases": [
+        "close-up",
+        "medium",
+        "full",
+        "wide",
+        "extreme wide"
+      ],
+      "set": {
+        "shot": "<that size>"
+      }
+    },
+    {
+      "phrases": [
+        "over X's shoulder"
+      ],
+      "set": {
+        "rule": "over_the_shoulder"
+      }
+    }
+  ]
+}

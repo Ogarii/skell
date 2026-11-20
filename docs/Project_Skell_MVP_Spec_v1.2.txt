@@ -1,0 +1,1457 @@
+PROJECT SKELL
+
+Final MVP Product & Technical Specification
+
+Document version: 1.2
+Document status: Consolidated MVP specification, revised against "Project Skell: design notes" (17 November 2026)
+Supersedes: versions 1.0 and 1.1 (1.2 adds the 360-degree camera)
+Product category: 2D Animation Assistance & Pose Generation
+Primary users: 2D animators and storyboard artists
+
+Source rule: the design notes PDF is the source of truth. Where this specification departs from it, the departure is listed in Appendix A with the reason.
+
+---
+
+1. PRODUCT OVERVIEW
+
+Project Skell is a proportion-aware 2D animation assistance tool that allows animators to generate geometrically consistent character poses from natural-language instructions or from joints placed over a simple sketch.
+
+The animator establishes the character's proportions once. Skell uses a 3D skeleton representation to calculate different poses, angles and perspectives while preserving the character's underlying bone lengths.
+
+Skell does not generate images. New poses come from moving the skeleton's joints programmatically, and Skell converts the calculated 3D pose into a clean 2D technical sketch.
+
+The intended visual output consists of:
+
+- Circular head representations.
+- Connected bone lines.
+- Circular joint markers.
+- Perspective floor grids.
+- Simple environmental objects (boxes and similar props).
+- Characters positioned consistently with the floor and props.
+- Any viewing angle: the camera orbits the full 360 degrees around the scene, from directly above to directly below, set by hand or described in words.
+
+Skell is not intended to generate finished illustrations or realistic anatomy. Its primary purpose is to make pose creation, spatial consistency and perspective easier for 2D animators, including scenes with two characters such as fight scenes.
+
+1.1 Core Product Promise
+
+An animator establishes character proportions once.
+
+Skell can subsequently generate different poses and movements, and show them from any camera angle the animator sets or describes, without changing the character's underlying proportions. It keeps the relative size of two characters correct in a shared scene.
+
+1.2 Product Principles
+
+1. The skeleton is the source of truth.
+2. Bone lengths remain fixed.
+3. All poses exist in 3D before being projected into 2D.
+4. The environment and characters share the same spatial coordinate system.
+5. AI proposes poses; deterministic geometry calculates and validates them.
+6. The animator retains control over the final result.
+
+---
+
+2. PROBLEM STATEMENT
+
+2D animators frequently need to redraw characters from different angles and positions.
+
+Maintaining consistent proportions across these drawings is difficult, particularly when:
+
+- A character turns toward or away from the camera.
+- A limb moves toward the viewer.
+- Perspective causes significant foreshortening.
+- A character interacts with environmental objects or another character.
+- Multiple poses must be created for an animation sequence.
+
+Today this is handled with model sheets, head-unit rulers, construction shapes, height charts and turnarounds, key poses set by lead animators, clean-up passes, onion skinning, reusable rigs (Toon Boom, Moho, Adobe Animate) and supervisor review.
+
+Project Skell moves these consistency checks out of human review and into the underlying geometry, so proportions cannot drift and animators can concentrate on posing and animation.
+
+2.1 Landscape and gap
+
+- Rigging and bone tools: Moho, Spine, Toon Boom, Live2D.
+- Pose-to-image generation: ControlNet and OpenPose with Stable Diffusion.
+- In-betweening research: motion prediction and ToonCrafter-style auto-inbetweening.
+
+None of these combine into a simple stick-figure-in, consistent-scene-out workflow for 2D artists. Skell avoids the hardest generation problem (identity drift in generated art) by not generating images at all.
+
+---
+
+3. TARGET USERS
+
+Primary users:
+
+- 2D character animators.
+- Storyboard artists.
+- Character designers.
+- Independent animation studios.
+- Animation students.
+
+The initial product prioritizes artists who work with gesture drawings, stick figures and skeletal pose references.
+
+---
+
+4. CORE USER WORKFLOW
+
+4.1 Character Setup
+
+The animator draws or imports a simple character sketch and places Skell's standard joints (Section 5.1) over it. The sketch must be drawn in the rest pose: standing, facing the front, legs straight, arms slightly away from the body, every limb flat to the page. Only then do the drawn 2D lengths equal the true 3D lengths.
+
+They establish:
+
+- Overall character height.
+- Head size (head radius), shown as a head-unit count (for example 6.5 heads tall).
+- Torso length.
+- Shoulder width and hip width.
+- Upper and lower arm lengths.
+- Upper and lower leg lengths.
+- Joint positions.
+
+Skell converts the placement into a skeleton graph.
+
+Left/right rule: hand-drawn sketches rarely have identical left and right sides. By default Skell averages each left/right pair and applies the average to both sides ("symmetric" on). The animator can switch symmetry off for deliberately asymmetric characters.
+
+Scale rule: the first character in a project is the reference character and is scaled so its standing height is 250 scene units. Every further character is entered relative to it through the height chart (for example 1.1 times the reference height), so all characters share one unit scale. The camera presets in Section 8 assume this scale.
+
+The animator can adjust individual measurements and then lock the resulting proportions.
+
+Character profiles must be reusable.
+
+4.2 Pose Input
+
+Skell supports two primary input methods.
+
+Method A: Natural-language instructions
+
+Examples:
+
+- Draw the character kneeling and picking up a box.
+- Make the character run toward the camera.
+- Position the character with one arm extended.
+- Character A throws a right hook at character B.
+- Show the character from a 30-degree elevated camera angle.
+- View her from behind, low angle, slightly tilted.
+- Kneeling, seen from over B's shoulder.
+
+A request can describe a pose, a camera, or both. For a pose, the AI maps the request to one tag from the fixed intent vocabulary (Section 10.3) plus free text, and proposes structured bone directions. For a camera, it proposes camera values that Skell resolves and checks deterministically (Section 8.4).
+
+Method B: Joint placement over a rough sketch
+
+The animator drops a rough drawing into the scene as an underlay (an image, or strokes drawn in Skell) and drags the character's joints onto it. Skell starts from the current pose so only the joints that differ need moving.
+
+Skell then reconstructs the 3D pose deterministically, with no AI and no trained model:
+
+1. Start at the root (pelvis), whose depth comes from the character's current scene position.
+2. For each bone, cast a ray from the camera through the placed 2D joint.
+3. Intersect that ray with the sphere around the parent joint whose radius is the fixed bone length.
+4. The intersection has two solutions (bone toward or away from the camera), one solution (bone perpendicular to the view ray) or none (the bone was drawn longer than it can ever look).
+5. Two solutions: pick the one closest to the previous pose by default. The animator can flip any bone with a per-bone depth-flip toggle.
+6. No solution: if the drawn bone is at most 2% too long, use the nearest point on the sphere silently. Beyond 2%, use the nearest point and flag the bone as "drawn too long by X%".
+7. Validate the result like any other pose (Section 10.4).
+
+Because a 2D drawing does not uniquely determine depth, default choices and per-bone depth flips are always available.
+
+Automatic detection of joints from a rough drawing (computer vision or a multimodal model) is outside the MVP (Section 14).
+
+4.3 Pose Generation
+
+The AI proposes yaw and pitch values for the character's bones, plus facing values and root position.
+
+The geometry engine:
+
+1. Receives the proposed directions.
+2. Converts them into internal rotations (Section 6).
+3. Applies joint constraints.
+4. Calculates 3D joint positions and places the character on the ground.
+5. Checks reach, balance, overlap and continuity.
+6. Projects the result through the camera.
+7. Returns valid pose alternatives with any warnings attached.
+
+Skell offers three to four suggestions per request.
+
+The animator chooses the preferred result rather than being forced to accept a single generated pose.
+
+Alongside AI suggestions, a deterministic "Variations" action produces three variants of the current pose by rotating the selected joints within their limits. It needs no AI and also serves as the fallback when the AI service is unavailable.
+
+4.4 Scene and Camera Projection
+
+The system projects one or two 3D characters into a 2D scene.
+
+The environment must share the characters' coordinate system and camera.
+
+Initial environmental elements:
+
+- Perspective floor grid.
+- Ground plane.
+- Simple geometric props (boxes) with a position and size.
+- Spatial reference lines (horizon at eye level, height-chart rulers).
+
+The camera can be placed anywhere around the scene (Section 8). Presets are shortcuts, not limits. Default focal length: 500 units.
+
+4.5 Refinement and Export
+
+The animator can:
+
+- Select a generated pose.
+- Drag joints (inverse kinematics) and rotate bones (the rotation carries the child bones with it).
+- Turn the character (facing) and move it around the floor and in depth.
+- Orbit, tilt and zoom the camera to any angle, or describe the angle in words.
+- Export a turnaround sheet of the current pose (Section 8.7).
+- Request alternative poses or deterministic variations.
+- Save named poses to a pose library tagged with intents.
+- Save characters, poses, scenes and sequences.
+- Create simple two-keyframe animations.
+- Export the resulting sketches.
+
+---
+
+5. CORE FUNCTIONAL REQUIREMENTS
+
+5.1 Character and Skeleton System
+
+The system must support:
+
+- Creating a character by placing the standard joints over a sketch, or importing skeleton JSON.
+- Establishing fixed bone lengths, shoulder and hip widths, and head radius.
+- Editing individual measurements during setup, with the symmetric left/right rule.
+- Locking established proportions.
+- Saving and reloading character profiles.
+- Displaying a height chart that compares characters in head units and scene units.
+
+Skeleton format skell_v1 (frozen)
+
+Future AI models are trained for one joint layout, so this layout and these names are fixed from the start.
+
+Side naming: l_ and r_ always mean the character's own anatomical left and right, never the side of the image. A character facing the front camera shows its right side on the image left. (The design notes PDF used image-side labels; see Appendix A, item 12.)
+
+Joints (15):
+
+pelvis (root), neck, head,
+l_shoulder, l_elbow, l_hand,
+r_shoulder, r_elbow, r_hand,
+l_hip, l_knee, l_foot,
+r_hip, r_knee, r_foot
+
+The head joint is the centre of the head circle. Foot joints are the point where the foot meets the floor.
+
+Bones (14), named "from>to":
+
+Posable bones (10, the ones the AI controls):
+- pelvis>neck (spine)
+- neck>head
+- l_shoulder>l_elbow, l_elbow>l_hand
+- r_shoulder>r_elbow, r_elbow>r_hand
+- l_hip>l_knee, l_knee>l_foot
+- r_hip>r_knee, r_knee>r_foot
+
+Rigid offset bones (4, fixed in their parent's frame, not posed by the AI):
+- neck>l_shoulder, neck>r_shoulder (half shoulder width, attached to the chest frame)
+- pelvis>l_hip, pelvis>r_hip (half hip width, attached to the pelvis frame)
+
+Offset lengths may be zero. With zero widths, skell_v1 reproduces the 11-joint figure in the design notes exactly, which is how the reference fixture in Appendix B is checked.
+
+Skeleton data model:
+
+- Joints and bones as above.
+- Root: pelvis, with a full orientation (Section 6). The MVP interface exposes only its facing (turn about the vertical axis); the stored format keeps the full rotation so it never has to change.
+- Root position on the ground plane (x, z). Height comes from the grounding rule (Section 5.3).
+- Rest lengths, shoulder and hip widths, head radius.
+- Rest axis of each bone in its parent's frame (from the rest pose).
+- Joint limits (Section 5.4).
+- Symmetric flag.
+
+5.2 3D Geometry Engine
+
+Coordinate convention (world):
+
+- X: right in the front camera's image.
+- Y: up. The ground plane is y = 0.
+- Z: away from the front camera.
+- The front of the stage is -Z. A character with facing 0 faces -Z, toward the front camera.
+
+Every pose is stored as rotations (Section 6). A bone's world direction is a derived unit vector.
+
+The fundamental forward-kinematics calculation is:
+
+Child = Parent + L x Direction
+
+Where:
+
+- L is the fixed bone length.
+- Direction is the bone's world direction, a normalized 3D vector, obtained by rotating the bone's rest axis by the bone's world rotation (the parent's world rotation combined with the bone's local rotation).
+
+Because the direction has length 1, bone lengths are preserved automatically. Rotating a parent bone carries every child bone with it.
+
+Direction from yaw and pitch (used at the AI boundary and in the editor):
+
+Direction = ( sin(yaw) cos(pitch),  sin(pitch),  -cos(yaw) cos(pitch) )
+
+Yaw and pitch are measured in the character's heading frame: the world frame turned by the character's facing.
+
+- Yaw 0: toward the character's front.
+- Yaw +90: toward the character's left side. Yaw -90: toward its right side. Yaw +/-180: behind it.
+- Pitch: degrees above horizontal.
+
+Facing uses the same convention: a character with facing φ has its front pointing along (sin φ, 0, -cos φ), so positive facing turns it toward image right (its own left at facing 0).
+
+At facing 0 the heading frame equals the world frame, yaw 0 points at the front camera and positive yaw points to image right. This is the convention in the design notes, so their yaw/pitch numbers can be used unchanged. Turning the character changes only its facing; the bone yaw and pitch values stay the same.
+
+Inverse kinematics
+
+The animator drags a joint, such as a hand, and the solver adjusts the connected bones.
+
+FABRIK is the initial solver. After each FABRIK pass, every moved bone's new rotation is the shortest-arc rotation from its old direction to its new direction applied to its old rotation, so its twist is kept. Joint limits are applied on every iteration.
+
+5.3 Grounding
+
+Unless a pose is marked airborne, the character is moved vertically so its lowest joint sits on the ground plane (y = 0). Airborne poses (jumps, the flight phase of a run) carry an explicit pelvis height.
+
+A joint counts as touching the ground when it is within 2% of the character's standing height of y = 0. These contact joints are used by the balance check.
+
+5.4 Joint Limits
+
+Limits are stored as data in the skeleton, not as code, so the client and server read the same rules.
+
+Two kinds of limit:
+
+- Ball limits (spine, neck, shoulder, hip): the bone's direction must stay inside a cone (a centre axis in the parent frame plus a half-angle), and its twist must stay within a range.
+- Hinge limits (elbow, knee): the bend angle between the two bones must stay within a range, and the bend must go the correct way.
+
+The "correct way" rule fixes the problem that a bone direction alone cannot say which way is backward:
+
+1. Take the upper bone direction a (upper arm or thigh) and the lower bone direction b (forearm or shin).
+2. When the bend exceeds 10 degrees, the bend axis is n = normalize(a x b).
+3. The limb's neutral side axis is the lateral axis of the chest frame (arms) or pelvis frame (legs), carried onto a by the shortest-arc rotation from the rest axis to a.
+4. The angle between n and the neutral side axis, measured about a, is the limb's rotation. It must stay within the shoulder rotation range (default +/-90 degrees) or hip rotation range (default +/-45 degrees), with elbows folding toward the front of the upper arm and knees toward the back of the thigh.
+5. Outside the range, the joint is bending backward. The child bone is rotated about a onto the nearest allowed bend plane, and the correction is recorded.
+
+The sign conventions in step 4 are pinned by the reference fixture: all four limbs of the Appendix B pose must pass.
+
+Default limits (editable per character, since cartoon characters often exceed anatomy):
+
+Bone| Limit| Default| Reference fixture value
+pelvis>neck| Ball: within angle of straight up (heading frame)| 100°| 58°
+neck>head| Ball: within angle of the spine direction; head twist relative to chest| 75°; +/-80°| 30°
+upper arms| Ball: no cone limit in MVP; shoulder rotation range| +/-90°| -
+elbows| Hinge: bend range| 0° to 155°| 6° and 12°
+thighs| Ball: within angle of a forward-down axis (yaw 0, pitch -45, pelvis heading frame); hip rotation range| 105°; +/-45°| 90° and 67°
+knees| Hinge: bend range| 0° to 160°| 52° and 66°
+
+Twist rules (twist is the rotation of a bone about its own length):
+
+- Chest: the spine bone's twist comes from the chest facing value. Default: the root facing.
+- Head: the head bone's twist comes from the head facing value. Default: the chest facing.
+- Upper arms and thighs: twist is derived from the elbow or knee bend plane when the bend exceeds 10 degrees; otherwise the previous twist is kept.
+- Forearms and shins: inherit their parent's twist (a hinge has no twist).
+- Hand orientation is not drawn in the MVP, but the forearm twist that defines it is stored.
+
+---
+
+6. ROTATION AND DIRECTION REPRESENTATION: ARCHITECTURAL DECISION
+
+Decision status: Settled (refined in version 1.1)
+
+Continuous for animation, discrete for decisions.
+
+This is an important architectural decision for the geometry engine and future AI development.
+
+6.1 Continuous internal representation
+
+The authoritative pose representation is continuous:
+
+- Each bone stores its rotation relative to its parent as a unit quaternion.
+- The root stores its world rotation as a unit quaternion.
+- Bone directions are normalized 3D unit vectors derived from these rotations.
+
+Why rotations rather than bare direction vectors (the version 1.0 choice): a direction has no twist. Without twist there is no reliable facing for the chest, head or hands, no definition of "backward" for elbows and knees, and no way to turn the character for side and three-quarter views. A unit quaternion is a direction plus a twist, so it keeps every benefit below while fixing those gaps. Storing rotations relative to the parent also means a rotated parent carries its children.
+
+Reasons for a continuous representation:
+
+- Exact pose representation.
+- Smooth animation interpolation.
+- Arbitrary camera angles.
+- No quantization error.
+- Better support for continuous motion.
+
+Bone lengths remain fixed independently of any rotation.
+
+Why not use discrete directions as the authoritative pose?
+
+A fixed set of points on a sphere introduces angular approximation error.
+
+For approximately uniform spherical sampling:
+
+spacing ≈ sqrt(4π / N)
+
+Examples:
+
+Sphere points| Approximate spacing| Typical nearest-point error
+162| 16°| about 8°
+642| 8°| about 4°
+
+These errors accumulate through a skeleton chain. For example, a 4° directional error on a 90-unit spine produces about 6 units of positional deviation.
+
+Increasing the number of points reduces the error but does not eliminate quantization.
+
+6.2 Discrete representation as an optional layer
+
+Discrete directions remain useful for:
+
+- AI angle suggestions rounded to 5° increments.
+- Future small-model classification.
+- Pose-library matching.
+- Nearest-direction lookup.
+- Optional direction snapping (for example to 162 mapped sphere points).
+
+They must never replace the authoritative continuous representation.
+
+6.3 Internal storage versus AI communication
+
+Internally:
+
+- Store unit quaternions (local per bone, world for the root).
+
+Externally:
+
+- Expose yaw and pitch per posable bone, in the heading frame, in JSON.
+- Expose facing values (root, chest, head) as yaw angles.
+- Use these for AI instructions and responses.
+
+Conversion rules:
+
+- Yaw/pitch to rotation: compute the world direction, express it in the parent frame, take the shortest-arc rotation from the bone's rest axis, then apply the twist rule (Section 5.4).
+- Exactly opposite the rest axis (a 180° swing, where the shortest arc has no unique axis): rotate about the parent frame's lateral axis.
+- Straight up or down (|pitch| > 89.9°, where yaw is undefined): accept any yaw on input; on output, report the previous frame's yaw, or 0 if there is none.
+
+6.4 Scalability considerations
+
+The architecture must allow future direction indexing without changing the underlying geometry engine.
+
+Potential scalability concerns:
+
+- Increasing direction-resolution requirements.
+- Efficient nearest-direction lookup.
+- AI classification across larger direction spaces.
+- Pose-library indexing and retrieval.
+- Maintaining precision during animation interpolation.
+- Avoiding expensive migration from discrete storage to continuous storage.
+
+Implementation strategy:
+
+1. MVP: continuous rotations.
+2. MVP animation: quaternion Slerp and easing.
+3. Later: optional 5° quantization for AI suggestions.
+4. Later: optimized direction indexing and classification.
+
+This is a scalability consideration, not an additional MVP feature.
+
+---
+
+7. ANIMATION AND INTERPOLATION
+
+The MVP supports basic keyframe animation.
+
+7.1 Keyframes
+
+- Store multiple poses.
+- Support two-keyframe animation.
+- Scrub between keyframes.
+- Save animation sequences.
+- Export frames.
+- Optionally ask the AI for in-between frames between the two keyframes (validated like any suggestion). A learned motion model comes later.
+
+7.2 Spherical Linear Interpolation (Slerp)
+
+Bone rotations are interpolated with quaternion spherical linear interpolation, bone by bone, in each bone's parent frame. Interpolate rotations, never joint positions, or bones shrink mid-move.
+
+- Shortest path: if the dot product of the two quaternions is negative, negate one first.
+- Slerp keeps every rotation a unit quaternion, so bone lengths remain unchanged throughout animation.
+- The root position is interpolated linearly with the same easing; the root facing takes the shorter way round.
+- Quaternions also remove the ambiguity of interpolating between two exactly opposite directions, which plain direction-vector Slerp cannot resolve.
+
+7.3 Easing
+
+Implement basic easing curves:
+
+- Linear.
+- Ease-in.
+- Ease-out.
+- Ease-in-out (starts and ends with zero angular velocity).
+- Anticipation (ease-in-back: s = t² ((k + 1) t - k), with k = 1.70158). The motion first moves slightly backward, as a wind-up. Because s dips below 0, Slerp extrapolates briefly; the result is clamped to joint limits.
+
+Easing controls the speed profile of the movement.
+
+7.4 Later animation capabilities
+
+The following are not required for the initial MVP:
+
+- Angular velocity-based prediction.
+- Learned motion prediction.
+- Advanced Jacobian-based IK.
+- Complex choreography.
+
+The MVP requires Slerp and easing curves, not a full motion-prediction system.
+
+---
+
+8. CAMERA AND PERSPECTIVE ENGINE
+
+The camera can view the scene from any direction: all the way around it (360 degrees), from directly above to directly below, tilted, and from any distance. Presets are shortcuts, not limits. The animator sets the angle by hand (Section 8.6) or describes it in words (Section 8.4).
+
+Nearer parts are drawn larger and farther parts smaller. The same 3D pose must be usable from every camera: the camera never changes the pose, only how it is drawn.
+
+8.1 Camera model
+
+The camera sits on a sphere around a target point, the same idea as a bone sitting on a sphere around its parent joint:
+
+- Target T: by default the head (eyes) of the selected character, as in the design notes. Other targets in Section 8.3.
+- Azimuth α: the camera's position around the target, using the same convention as bone yaw. 0 = in front of the stage (-Z side), +90 = on the +X side, +/-180 = behind. Any value; it wraps at 360.
+- Elevation θ: the camera's position above (+) or below (-) the target, from -90 (directly below, looking up) to +90 (directly above, looking down).
+- Roll ρ: tilt of the camera about its viewing direction (a Dutch angle). Positive roll rotates the image clockwise.
+- Distance R from the target.
+- Focal length F: default 500. Changing F zooms without changing perspective; changing R changes perspective.
+
+Character-relative angles
+
+People describe cameras relative to the character ("from behind", "her left side"), so the editor and the AI can give the azimuth relative to a character's facing:
+
+α = facing + α_rel
+
+α_rel 0 = in front of the character's face, +90 = its left side, -90 = its right side, 180 = behind it, whichever way the character is turned. The stored camera always holds world values.
+
+Equations
+
+Camera direction from the target:  d  = ( sin α cos θ,  sin θ,  -cos α cos θ )
+Camera position:                   C  = T + R d
+Forward vector:                    f  = -d = ( -sin α cos θ,  -sin θ,  cos α cos θ )
+Right vector:                      r  = ( cos α,  0,  sin α )
+Up vector:                         up = ( -sin θ sin α,  cos θ,  sin θ cos α )
+
+For each point P:
+
+u = (P - C) · r
+v = (P - C) · up
+w = (P - C) · f
+
+Roll:
+
+u' = u cos ρ + v sin ρ
+v' = -u sin ρ + v cos ρ
+
+Perspective scale: s = F / w
+
+Screen projection:
+
+x' = cx + s u'
+y' = cy - s v'
+
+Properties (checked numerically at every 15 degrees of azimuth and elevation, including straight up and straight down):
+
+- f, r and up are orthonormal for every α and θ, so there is no singular viewpoint and the image never flips at the poles.
+- Dragging past +/-90 elevation stops at the pole. Every view is still reachable, because the view beyond a pole is the same as the view at azimuth + 180 degrees.
+- At α = 0 and ρ = 0 the equations reduce exactly to the version 1.0 and design-notes equations.
+- With the front eye-level camera at R = 410 on the reference pose, the camera sits 500 units in front of the pelvis, matching the design notes' first version (s = 500 / (500 + z)).
+
+Near plane: points with w below 20 units are not drawn. Lines that cross the near plane are clipped in 3D before projection. The floor grid is finite (default +/-1000 units) and clipped the same way. If the camera ends up inside a character (any joint closer than the near plane), the editor warns.
+
+8.2 Presets (shortcuts)
+
+Character-relative views of the selected character, elevation 0, distance 410:
+
+View| α_rel
+Front| 0°
+Front-left three-quarter| +45°
+Left side| +90°
+Back-left three-quarter| +135°
+Back| 180°
+Back-right three-quarter| -135°
+Right side| -90°
+Front-right three-quarter| -45°
+
+Height and framing presets (applied to the current azimuth):
+
+View| Elevation θ| Distance R| Roll ρ
+Eye level| 0°| 410| 0°
+Elevated (high angle)| 30°| 410| 0°
+Overhead (bird's-eye)| 90°| 410| 0°
+Low angle| -30°| 410, floor guard applies| 0°
+Worm's-eye| -75°| 410, floor guard applies| 0°
+Distant eye level| 0°| 820| 0°
+Dutch| current| current| 20°
+
+The design notes' four views (eye level, 30-degree elevation, overhead, eye level at twice the distance) are all kept, and the open "fourth view" question is answered by the full orbit.
+
+In the editor, azimuth, elevation and roll can optionally snap to 15-degree steps. Stored values stay continuous.
+
+8.3 Targets and framing
+
+Orbit targets:
+
+- Head of the selected character (default).
+- Pelvis or any joint of either character.
+- Centre of a prop.
+- Scene centre: the middle of the two characters' combined bounding box.
+- A fixed point in the world.
+
+Shot sizes set the target and the distance from the current pose's bounding box, so a kneeling figure gets a closer full shot than a standing one:
+
+Shot| Framed region| Target
+Extreme wide| 4 x character height| Bounding-box centre
+Wide| 2 x character height| Bounding-box centre
+Full| Whole character| Bounding-box centre
+Medium| Pelvis to top of head| Midpoint of that region
+Close-up| Neck to top of head| Head
+
+R = F x framed height / (0.8 x canvas height)
+
+The reference canvas height is 380 units. A full shot of the 250-unit reference character then gives R ≈ 411, the design notes' 410.
+
+Over-the-shoulder (two characters): the target is the other character's head. The camera is placed on the line from that head through the named shoulder of this character, 15% of standing height beyond the shoulder and 5% of standing height above it. α, θ and R are derived from that position.
+
+Floor guard
+
+The floor guard is on by default. If the requested camera would sit below 2% of standing height above the floor, Skell keeps the angle, moves the camera closer along the same line until it is at that height, and scales the focal length by the same factor so the target keeps its size on screen. Perspective gets stronger, as in a real low-angle shot. Example: a -30 degree camera on the reference pose moves from R 410 to R 214, with F going from 500 to 261. The editor says what it changed.
+
+If no point on that line is above the floor (the target itself is on the floor and the camera looks up at it), the guard keeps the angle and tells the animator to raise the target or switch the guard off.
+
+With the guard off, the camera may go under the floor. The floor grid is see-through and is drawn dashed when seen from below.
+
+8.4 Describing the camera in words
+
+The AI turns a description into camera values; Skell then resolves and checks them (Section 8.5). Only the parameters the description mentions change; everything else keeps its current value.
+
+Phrase| Parameters (character-relative)
+front, facing us| α_rel 0
+front three-quarter (left / right)| α_rel +45 / -45
+side, profile (left / right)| α_rel +90 / -90
+back three-quarter (left / right)| α_rel +135 / -135
+from behind, back view| α_rel 180
+eye level| θ 0
+slightly above / slightly below| θ +15 / -15
+high angle| θ +30
+bird's-eye, top-down, overhead| θ +90
+low angle| θ -30
+worm's-eye| θ -75
+Dutch, tilted| ρ +20 (or -20 if "tilted left")
+close-up, medium, full, wide, extreme wide| shot size (Section 8.3)
+over X's shoulder| over-the-shoulder rule (Section 8.3)
+an explicit number ("from 60 degrees to her right")| that value
+
+If a description is ambiguous ("from the side" without saying which), the AI returns the alternatives (left and right) and the animator picks, as with poses.
+
+8.5 Camera validation
+
+Every camera, whether set by hand or proposed by the AI, is resolved and checked deterministically:
+
+1. Convert character-relative azimuth to world azimuth.
+2. Wrap azimuth to (-180, 180]; clamp elevation to [-90, 90]; wrap roll to (-180, 180].
+3. Resolve shot size and over-the-shoulder rules into target and distance.
+4. Keep R at 30 units or more and F between 150 and 2000.
+5. Apply the floor guard.
+6. Warn if the camera is inside a character, or if more than half of the target character's bounding box is outside the frame.
+
+8.6 Camera controls in the editor
+
+- Drag to orbit: horizontal drag changes azimuth, vertical drag changes elevation.
+- Scroll to change distance; a modifier key plus scroll changes focal length.
+- A modifier key plus drag changes roll.
+- Numeric fields for azimuth, elevation, roll, distance and focal length, with a world / character-relative switch.
+- A small orientation globe showing the camera's position on its sphere and the character's facing arrow.
+- Preset buttons, a "describe camera" text box, the snap toggle, the floor-guard toggle and a reset button.
+- "Stay relative to character": when on, turning the character turns the camera with it.
+
+A scene or sequence stores one camera: its resolved world values, plus the relative values or description that produced it. Camera moves within a shot are deferred (Section 14).
+
+8.7 Turnaround export
+
+Renders the current pose from the eight character-relative azimuths (every 45 degrees) at the current elevation and distance, side by side on one sheet with the height-chart ruler. This is the model-sheet turnaround that animators already use (Section 2), produced from the locked skeleton.
+
+8.8 Perspective and foreshortening
+
+The true length of a bone never changes.
+
+A bone tilted toward or away from the camera appears shorter in the projected image.
+
+The system must distinguish:
+
+- Actual bone-length changes (impossible by construction).
+- Foreshortening: a bone tilts, so it looks shorter.
+- Distance-based perspective scaling: the whole character shrinks with distance.
+
+These are separate effects.
+
+The renderer must derive the visible result from the 3D geometry rather than manually shortening bones.
+
+---
+
+9. SKETCH RENDERER AND ENVIRONMENT
+
+9.1 Visual standard
+
+The renderer follows the technical skeleton-sketch style of the design notes figures (Figures 1, 3 and 6 to 9).
+
+Required elements:
+
+- Simple circular head (radius from the skeleton).
+- Connected bone lines.
+- Circular joint markers.
+- Clean line styling.
+- White or minimal background.
+- Perspective floor grid with the horizon drawn at eye level.
+- Simple geometric props.
+
+Depth order: bones, joints and props are drawn from farthest to nearest (by w at their midpoint), so nearer limbs cover farther ones.
+
+Full anatomy and finished character illustrations are outside the MVP.
+
+9.2 Editor overlays (from the design notes)
+
+Shown in the editor, toggleable, and left out of exports by default:
+
+- Colour: bones in the image plane drawn teal, tilted bones amber.
+- Angle badge beside each tilted bone showing its tilt toward or away from the camera.
+- Dashed ghost line showing the true length the bone would have if it were flat.
+- Optional inset showing the same pose from 90 degrees to the side of the current camera, for checking depth.
+- Root (pelvis) marked in a distinct colour.
+
+9.3 Environment rendering
+
+The environment is part of the generated sketch.
+
+It must not be treated as an unrelated background image.
+
+The renderer supports:
+
+- Perspective ground plane.
+- Grid lines converging toward the eye point.
+- Boxes with a position and size, standing on the floor.
+- Spatial reference lines.
+- Character placement relative to props.
+
+Physical interaction with props (holding, pushing, collision) is not simulated in the MVP. The animator positions hands and feet against props with inverse kinematics; the overlap check warns if a bone passes through a box.
+
+9.4 Shared coordinate system
+
+Characters and environmental objects use the same world coordinate system and camera projection.
+
+This ensures that:
+
+- Objects scale correctly with perspective.
+- Characters line up with objects at the correct positions.
+- Each foot sits on the floor at its own depth.
+- Camera changes affect the entire scene coherently.
+- Two characters always have the correct relative size.
+
+---
+
+10. AI POSE ASSISTANT
+
+10.1 Initial AI implementation
+
+Use an external LLM (initially the Claude API) with tool calling or JSON-schema output.
+
+The AI never draws. It receives the skeleton as structured data and returns rotations; code validates and applies them.
+
+The AI service is replaceable without modifying the geometry engine.
+
+Responsibilities:
+
+- Understand natural-language instructions.
+- Map each request to an intent tag.
+- Suggest structured yaw and pitch values, facing values and root position.
+- Turn camera descriptions into camera values (Section 8.4).
+- Offer three to four pose alternatives.
+- Suggest in-between frames between two keyframes.
+
+Interpreting images or rough drawings is not an AI responsibility in the MVP (Method B is deterministic; Section 4.2).
+
+10.2 What the AI receives
+
+System prompt (static per skeleton and prompt version):
+
+- Skeleton definition: joint and bone names, lengths, limits, symmetric flag.
+- Rules: lengths are fixed, stay inside limits, use the output schema, and the coordinate and side conventions (Section 5.2).
+- The intent vocabulary and a short pose vocabulary (named poses from the pose library).
+
+User message (changes each request):
+
+- Current pose in the same yaw/pitch format.
+- The previous two or three poses.
+- Intent text from the animator.
+- Scene context: the character's facing and position, the other character's position, facing and current pose if present, and props with position and size.
+- Current camera: its azimuth (also given relative to the character's facing), elevation, roll and shot size. Bone yaw is independent of the camera, so the AI needs this to turn phrases such as "run toward the camera" into yaw values.
+- Number of frames and number of options (3 to 4).
+
+Generation settings: low temperature; one call returns all options.
+
+10.3 Intent vocabulary (intent_vocab_v1, fixed and versioned)
+
+Every request is logged with exactly one tag, so the logs can later train a model that takes an intent tag as input.
+
+- Stance and locomotion: idle, stand_up, walk, run, jump, crouch, kneel, sit, fall, get_up.
+- Reaching and handling: reach, point, pick_up, put_down, carry, push, pull, throw.
+- Fighting: guard, jab, cross, hook, uppercut, kick, block, dodge, recoil.
+- Gesture: wave, look_at.
+- other (free text only; reviewed periodically for new tags).
+
+Camera-only requests carry request type "camera" and no intent tag.
+
+10.4 Structured output
+
+One yaw and pitch pair per posable bone per frame, in the heading frame, plus facing values and root position. When the request describes a camera, a camera block is added.
+
+Example (the reference fixture's first frame, abbreviated, with a camera description "from behind her right, low angle"):
+
+{
+  "request_type": "both",
+  "intent": { "tag": "pick_up", "text": "kneel and pick up the box" },
+  "camera": {
+    "relative_to": "character",
+    "character": "A",
+    "target": "head",
+    "azimuth": -135,
+    "elevation": -30,
+    "roll": null,
+    "shot": null,
+    "distance": null,
+    "focal": null
+  },
+  "options": [
+    {
+      "label": "Kneel on left knee, right hand reaches the box",
+      "frames": [
+        {
+          "t": 1,
+          "root": { "x": 0, "z": 0, "facing": 0 },
+          "facing": { "chest": 0, "head": 0 },
+          "airborne": false,
+          "pose": {
+            "pelvis>neck":      { "yaw": -6,  "pitch": 32 },
+            "neck>head":        { "yaw": -16, "pitch": 61 },
+            "l_hip>l_knee":     { "yaw": 146, "pitch": -40 }
+          }
+        }
+      ]
+    }
+  ]
+}
+
+A complete response must include all ten posable bones in every frame. Rigid offset bones are never included.
+
+request_type is "pose", "camera" or "both". In the camera block, null means "keep the current value". For an ambiguous camera description the block may instead be "camera_options": a list of two to four such blocks.
+
+AI suggestions may use rounded 5° angle increments.
+
+The internal geometry engine retains continuous precision.
+
+10.5 Validation
+
+The AI must never directly control the character's geometry.
+
+Every suggestion passes through deterministic validation on the server, in this order:
+
+1. Structure: valid schema, all ten posable bones present, finite numbers, frames in order, known intent tag. Failure is a hard error.
+2. Conversion: yaw/pitch and facing values to rotations (Section 6.3).
+3. Limits: apply hinge, bend-direction, cone and twist limits (Section 5.4). Clamping is allowed; the size of each correction is recorded per bone.
+4. Forward kinematics and grounding (Section 5.3).
+5. Reach: when the request names a target (a prop or the other character), the end effector must be able to reach it (distance from the chain's start no more than the chain's length). Unreachable targets are a hard error.
+6. Balance: the centre of mass, using standard segment mass fractions (head 8.1%, trunk 49.7%, each upper arm 2.8%, each forearm and hand 2.2%, each thigh 10.0%, each shin and foot 6.1%; segment midpoints, head at the head joint), must lie inside the support area: the outline around all contact joints, widened by 4% of standing height around feet and 2% around other contacts. Outside it the pose is flagged "unstable". Airborne poses skip this check. Warning only.
+7. Overlap: non-adjacent bones closer than 1% of standing height, or a bone passing through a box, are flagged. Warning only.
+8. Continuity: a bone rotating more than 45° between consecutive frames (at 24 fps) is flagged as a jump. Warning only.
+9. Camera: any camera block is checked with the camera validation in Section 8.5.
+
+Outcomes:
+
+- Hard error: retry once, sending the error back to the AI. If the retry fails, drop that option.
+- If every option fails: keep the previous pose and tell the animator.
+- Warnings: shown on the option as badges. The animator decides; warnings never hide an option.
+
+10.6 Artist control
+
+The artist remains responsible for the final pose.
+
+The system offers three to four alternatives per request.
+
+Artist selections, edits and rejections are logged for future model development (Section 12.3).
+
+---
+
+11. SCENES AND MULTIPLE CHARACTERS
+
+The MVP supports up to two characters in one scene, as the design notes require (for example a fight scene).
+
+MVP capabilities:
+
+- Two independent skeletons, each from its own character profile.
+- Shared ground plane and camera. The camera orbits the selected character, the scene centre, or another target (Section 8.3), including over-the-shoulder shots.
+- Consistent perspective and correct relative size by construction.
+- Height chart check: each character's standing height in scene units is shown beside its height-chart value, and a ruler overlay compares both characters at their current depth.
+- Drag and pose either character; AI requests target one character and include the other as context.
+- A character can be posed to reach the other with inverse kinematics (for example a fist dragged to the opponent's head).
+
+Deferred until the core geometry is established:
+
+- Contact pins that keep a fist attached to a target joint while the other character moves.
+- Collision handling and contact solving between characters.
+- Fight choreography.
+
+---
+
+12. TECHNICAL ARCHITECTURE
+
+12.1 Frontend
+
+Recommended technologies:
+
+- React.
+- TypeScript.
+- Konva or PixiJS for canvas rendering and interaction.
+
+Responsibilities:
+
+- Character setup and joint placement.
+- Skeleton editor and height chart.
+- Scene canvas with up to two characters.
+- 360-degree camera controls, presets and orientation globe (Section 8.6).
+- Pose editing (drag, rotate, facing, depth flip, depth position).
+- Timeline.
+- Rendering and editor overlays.
+- Interactive previews.
+
+Forward and inverse kinematics, limit clamping during drags, projection and depth sorting run on the client in TypeScript, so dragging is instant (target: redraw within 16 ms for two characters on a mid-range laptop).
+
+12.2 Backend
+
+Recommended technology:
+
+- Spring Boot.
+- Java or Kotlin.
+
+Responsibilities:
+
+- AI provider communication (the API key never reaches the client).
+- Prompt construction.
+- Response parsing.
+- Authoritative pose validation.
+- Persistence of skeletons, poses, scenes and sequences.
+- Suggestion and artist-selection logging.
+
+Endpoints:
+
+- POST /skeleton
+- GET /skeleton/{id}
+- PUT /skeleton/{id} (setup edits until proportions are locked)
+- POST /pose/suggest (pose, camera or both, by request type)
+- POST /camera/resolve (resolves and checks a camera set by hand; Section 8.5)
+- POST /pose/validate (authoritative check of manually edited poses before saving)
+- POST /pose
+- GET /pose/{id}
+- POST /scene, GET /scene/{id}
+- POST /sequence, GET /sequence/{id}
+- POST /pose/log
+
+One geometry kernel, two languages, one set of fixtures
+
+The client needs the geometry for instant previews and the server needs it for authoritative validation, so the small geometry kernel (quaternion maths, conversions, forward kinematics, limit clamping, grounding, projection) exists in TypeScript and in Java/Kotlin. The design notes warn against duplicating rules, so:
+
+- Every rule (lengths, limits, tolerances, mass fractions, intent vocabulary) is data in the skeleton or a shared config file, read by both sides. No rule is written as code twice.
+- A shared folder of golden fixtures (Appendix B lists the first set) holds inputs and expected outputs as JSON. Both test suites must pass every fixture in CI (world positions within 1e-6 units, screen positions within 0.01 px).
+- The server is the authority. If the client preview and the server disagree, the server result is used and the fixture set gains a case.
+- Moving the kernel to Kotlin Multiplatform (one implementation compiled for both sides) is the consolidation path once the web editor is proven.
+
+12.3 Database
+
+PostgreSQL with JSONB columns.
+
+Tables:
+
+- skeletons: skell_v1 JSON, locked flag, reference-character flag, height-chart value.
+- poses: pose JSON (rotations), skeleton id, name, intent tag (pose library).
+- scenes: characters with positions and facing, props, camera (resolved world values, plus the relative values or description that produced them, and the stay-relative flag).
+- sequences: scene id, keyframes, easing, frame count.
+- suggestions: created time, request type, skeleton id and format version, prompt version, provider and model, temperature, request JSON (current pose, previous poses, intent tag and text, scene context), raw response, parsed options, per-option validation result (hard errors, per-bone clamp angles, warnings), latency, token counts.
+- artist_picks: suggestion id, action (picked, edited, rejected all, regenerated, used variation), picked option index, final pose JSON, edit distance (summed per-bone angle change from the picked option to the final pose), created time.
+
+12.4 AI Layer
+
+- Prompt builder, provider interface and response parser as their own module, so providers can be swapped.
+- Claude API first, with tool calling or JSON-schema output.
+- Low temperature, three to four options per call.
+- Prompt versions are numbered and logged with every suggestion.
+
+12.5 Future In-house Model
+
+Potential future technologies:
+
+- Python and PyTorch for training.
+- A small FastAPI service to serve it.
+- Spring Boot calls it behind the same interface as the LLM, so an A/B test is a configuration switch.
+- Motion-capture retargeting scripts in Python.
+
+Model options:
+
+- Small sequence model (transformer or similar): rotations over time plus an intent tag in, next rotations out.
+- Fine-tuned open LLM: faster to build, heavier to run.
+- Distillation: train the small model on the LLM's approved outputs.
+
+Data sources:
+
+- Prototype logs (accurate to the users' style, slow to grow).
+- Artist-approved keyframe sequences, which carry the stylised 2D feel that motion capture lacks.
+- Public motion-capture datasets such as CMU Mocap, AMASS and 100STYLE, retargeted to skell_v1 as rotations scaled to each character's bone lengths. Their skeletons use anatomical left/right and have shoulder and hip joints, which skell_v1 now matches.
+
+Artist selections and corrections are particularly valuable because chosen-versus-rejected gives preference data and edits show how far the AI was off.
+
+Order: build the prototype with logging on, collect a few thousand artist-approved sequences, train on logs plus retargeted mocap, then A/B test against the LLM using artist pick rate.
+
+The validation layer remains even after introducing a custom model.
+
+12.6 DevOps
+
+- Docker Compose for the app and PostgreSQL.
+- GitHub Actions for build, test (including both fixture suites) and deploy.
+
+Avoid early:
+
+- Microservices (one backend is enough until the in-house model exists).
+- Kotlin Multiplatform until the web editor is proven.
+- Rules written as code in two languages (Section 12.2).
+
+---
+
+13. DEVELOPMENT MILESTONES
+
+Milestone 1 — Skeleton Foundation
+
+- Build the canvas.
+- Implement skell_v1: joint names, bones, rigid offsets, anatomical sides.
+- Character setup by joint placement over a sketch; symmetric left/right rule; head radius and head units.
+- Reference-character scaling and the height chart.
+- Save and load skeleton JSON in PostgreSQL.
+
+Milestone 2 — 3D Geometry
+
+- Quaternion rotations (local per bone, world for the root) and derived directions.
+- Yaw/pitch and facing conversion in the heading frame, including the vertical and 180° cases.
+- Forward kinematics and grounding.
+- Joint limits: cones, twist ranges, hinges and the bend-direction rule.
+- Inverse kinematics (FABRIK with twist preservation and limits).
+- Golden fixture set (Appendix B) passing in TypeScript.
+
+Milestone 3 — Camera and Environment
+
+- 360-degree orbit camera: azimuth, elevation, roll, distance, focal length, world and character-relative angles.
+- Near-plane clipping and the floor guard.
+- Orbit targets, shot sizes and over-the-shoulder placement.
+- Camera controls: drag orbit, numeric fields, orientation globe, snapping, presets.
+- Turnaround export.
+- Perspective floor grid and horizon.
+- Boxes as props.
+- Depth-ordered drawing and editor overlays.
+
+Milestone 4 — Sketch Interaction and Scenes
+
+- Joint dragging, bone rotation, facing control and depth position.
+- Two characters in one scene with the height-chart check.
+- Pose library (save, name, tag) and deterministic variations.
+- Save and reload characters, poses and scenes.
+- Server validation endpoint with the fixture set passing in Java/Kotlin.
+
+Milestone 5 — AI Integration
+
+- Prompt builder with skeleton, current pose, history, intent and scene context.
+- Intent vocabulary and tagging.
+- Structured yaw/pitch output with three to four options.
+- Camera descriptions turned into camera values, with alternatives when ambiguous.
+- Full validation pipeline with retry and fallback.
+- Logging of requests, responses, validation results and artist actions.
+
+Milestone 6 — Joint-Placement Sketch Input
+
+- Sketch underlay (image or drawn strokes).
+- Ray-sphere depth reconstruction with default choice and per-bone depth flips.
+- "Drawn too long" flags.
+- Round-trip test: project a pose, reconstruct it from the 2D joints, recover it within 1e-6 units.
+
+Milestone 7 — Animation
+
+- Two-keyframe animation.
+- Quaternion Slerp with shortest-path handling.
+- Easing curves including anticipation.
+- Root interpolation.
+- Optional AI in-betweens.
+- Timeline scrubbing and frame export.
+
+Milestone 8 — Integration and Animator Evaluation
+
+- Connect the complete workflow.
+- Test persistence and scene consistency.
+- Resolve integration issues.
+- Test with two or three real animators: track pick rate and edit distance, and ask what slows them down most and what they would pay for.
+
+---
+
+14. FEATURES OUTSIDE THE INITIAL MVP
+
+Deferred:
+
+- Custom-trained AI model.
+- Automatic joint detection from rough drawings (vision or multimodal model).
+- Contact pins and two-character contact solving.
+- Advanced collision and contact simulation, including physical interaction with props.
+- Complex fight choreography.
+- Full physics-based balance simulation.
+- Advanced motion prediction.
+- Camera moves within a shot (animated camera paths).
+- Exposing pelvis tilt and roll in the interface (stored, not editable).
+- Drawn hand and foot orientation.
+- Finished anatomical character rendering.
+- Advanced 3D modelling.
+- Production-level animation timeline.
+- Multiple AI provider orchestration.
+- Advanced direction classification.
+
+These can be reconsidered after the MVP has been tested with real animators.
+
+Rule for new ideas: write each idea in one line in one list and tag it core (needed for the MVP), later (after validation) or separate product. Only build what is tagged core. Filter: does it help an animator keep proportions or move faster, and can it be tested without new data or models?
+
+---
+
+15. TECHNICAL RISKS AND SCALABILITY
+
+15.1 AI pose quality
+
+LLM-generated motion may not feel natural or useful enough for animators to keep using.
+
+Mitigation:
+
+- Offer multiple suggestions and deterministic variations.
+- Log artist selections and edits.
+- Maintain deterministic validation.
+- Collect approved pose sequences.
+- Measure against the pass thresholds in Section 17.
+
+15.2 2D-to-3D ambiguity
+
+A 2D drawing does not reveal the depth direction of every bone.
+
+Mitigation:
+
+- Ray-sphere reconstruction gives the exact two candidates for each bone.
+- Default to the candidate closest to the previous pose.
+- Per-bone depth-flip controls and manual correction.
+- Validate the reconstructed pose.
+
+15.3 Perspective and occlusion
+
+Foreshortening and overlapping limbs can make poses difficult to read, especially with two characters.
+
+Mitigation:
+
+- Use true 3D geometry.
+- Maintain consistent camera projection.
+- Depth-ordered drawing and the editor overlays (tilt colour, angle badges, ghost lines, side-view inset).
+
+15.4 Two-character interaction
+
+Contact between two skeletons introduces additional complexity.
+
+Mitigation:
+
+- Two independent characters with correct relative size in the MVP.
+- Manual reach with inverse kinematics.
+- Contact pins and shared constraints later.
+
+15.5 Direction representation scalability
+
+Continuous rotations remain authoritative.
+
+Discrete indexing is an optional future optimization for classification, lookup and pose matching.
+
+The system must avoid introducing a storage design that requires replacing the geometry engine when the direction library grows.
+
+15.6 Future AI training data
+
+A custom model requires enough high-quality training examples.
+
+Mitigation:
+
+- Log requests, responses and intent tags from the beginning.
+- Record artist picks, edits and rejections.
+- Retarget appropriate motion-capture data.
+- Evaluate models using artist acceptance rates.
+
+15.7 Geometry divergence between client and server
+
+Two implementations of the geometry kernel can drift.
+
+Mitigation:
+
+- Rules as shared data, golden fixtures in CI, server as authority (Section 12.2).
+
+15.8 Camera descriptions
+
+Animators describe angles loosely ("from the side", "a bit lower").
+
+Mitigation:
+
+- A fixed phrase table (Section 8.4), only described parameters change, alternatives for ambiguous descriptions, and direct manual controls always available.
+
+15.9 Unit scale
+
+Camera distances only suit characters of a known size.
+
+Mitigation:
+
+- Reference character normalized to 250 units; other characters scaled relative to it (Section 4.1).
+
+---
+
+16. DEVELOPMENT PRINCIPLES
+
+1. The skeleton is the source of truth.
+2. Bone lengths remain fixed after character setup.
+3. Store continuous rotations internally: unit quaternions per bone (relative to the parent) and for the root.
+4. Expose yaw, pitch and facing in the heading frame for AI communication.
+5. Use discrete directions only as an optional layer.
+6. All camera views originate from the same 3D pose.
+7. Characters and environment share one world coordinate system.
+8. AI proposes poses; deterministic geometry validates them.
+9. Interpolate rotations rather than joint positions.
+10. The animator remains in control of final pose selection.
+11. Keep the geometry engine independent of the AI provider.
+12. Write rules once, as data; check both geometry implementations against the same fixtures.
+13. Avoid unnecessary infrastructure complexity.
+14. Build and test one complete workflow before expanding features.
+
+---
+
+17. POST-DEVELOPMENT ACCEPTANCE CHECKLIST
+
+Status: Reserved for evaluation after development.
+
+This checklist defines the measurable requirements against which the completed MVP will be tested.
+
+It must remain part of the project specification.
+
+A. Geometry
+
+- [ ] Bone lengths stay within 1e-6 units of their rest length after forward kinematics, inverse kinematics, interpolation and camera changes, across the full fixture set and 1,000 randomized poses.
+- [ ] Changing the camera leaves every world joint position unchanged.
+- [ ] No validated pose violates a joint limit; a deliberately backward elbow or knee is corrected to the nearest allowed bend.
+- [ ] The reference fixture (Appendix B) reproduces the expected world positions within 1e-6 units and screen positions within 0.01 px in both implementations, and matches the design notes' hand-built pose within 1 unit.
+- [ ] Projection reproduces the design notes' measurements for the reference pose: nearest hand about 133% scale and far foot about 85% at eye level; near-to-far size ratio about 1.56 at eye level and 1.27 at double distance.
+
+B. Sketch Generation
+
+- [ ] Different poses retain the same character proportions (lengths as in A).
+- [ ] Any viewpoint: the reference pose renders without error from every azimuth (15-degree steps, full 360), every elevation (-90 to +90 in 15-degree steps) and rolls of 0 and 20 degrees, with depth order correct and no image flip at the poles.
+- [ ] The eight turnaround views (front, sides, backs and three-quarters) come out the same whether produced by camera azimuth or by turning the character.
+- [ ] Camera descriptions: over a fixed set of 30 descriptions, at least 90% resolve within 15 degrees of the expected azimuth, 10 degrees of the expected elevation and to the expected shot size; ambiguous descriptions return alternatives.
+- [ ] Floor guard: no camera goes below the floor while the guard is on, the target keeps its on-screen size, and the editor states what changed.
+- [ ] Two characters in one scene: their standing heights in scene units match the height-chart ratio within 0.1%, and the ruler overlay shows that ratio correctly at any depth and camera.
+- [ ] AI outputs: at least 90% of options valid after clamping, measured over a fixed evaluation set of 30 prompts with 4 options each, rerun for every prompt version.
+- [ ] AI outputs: motion continuous, with no bone rotating more than 45° between consecutive frames at 24 fps in options marked valid.
+- [ ] Joint-placement sketch input: a projected pose reconstructed from its 2D joints, with the correct depth flips, matches the original within 1e-6 units; every bone with two depth solutions offers a working flip.
+
+C. Artist Experience
+
+- [ ] Animators reject fewer than 20% of AI requests outright (no option picked, before edits), measured with two or three animators.
+- [ ] Artists can correct generated poses by dragging, rotating, turning and flipping depth.
+- [ ] Artists can select between three to four suggestions per request.
+- [ ] Characters, poses, scenes and sequences can be saved and reloaded unchanged.
+- [ ] Sketches can be exported as images and frame sequences.
+- [ ] Dragging redraws within 16 ms for two characters on a mid-range laptop.
+
+Each requirement must be tested against actual application behaviour.
+
+A feature is not considered complete merely because its interface exists.
+
+The checklist will be evaluated item by item after development, with failed requirements documented and corrected.
+
+---
+
+18. POST-MVP DIRECTION
+
+Following initial animator testing, possible expansion areas include:
+
+- Custom-trained pose generation model.
+- Learned motion prediction.
+- Advanced animation sequences.
+- Automatic joint detection in rough sketches.
+- Two-character contact pins and interaction.
+- Balance and collision systems.
+- Larger pose libraries.
+- Optimized discrete direction indexing.
+- Animated camera moves and more sophisticated environment controls.
+
+Future priorities should be informed by animator feedback, suggestion acceptance rates, edit distances and observed workflow bottlenecks.
+
+---
+
+19. FINAL MVP DEFINITION
+
+Project Skell MVP is a proportion-locked 2D sketch and pose generation system.
+
+It enables animators to:
+
+1. Establish character proportions.
+2. Generate a reusable skeleton in the frozen skell_v1 format.
+3. Request poses through natural language or by placing joints over a rough sketch.
+4. Calculate poses using true 3D geometry.
+5. Preserve bone lengths automatically.
+6. View the same pose from any angle, 360 degrees around and from above or below, set by hand or described in words.
+7. Pose two characters in one scene with correct relative size.
+8. Render technical 2D sketches with a perspective environment.
+9. Refine, save and export the result.
+10. Create basic keyframe animations.
+
+The geometry engine uses continuous rotations (unit quaternions) as its authoritative representation, with bone directions derived from them.
+
+Discrete directions remain available as an optional layer for future AI classification, pose matching and scalability.
+
+The environment and characters share the same 3D coordinate system and camera.
+
+The AI assists with pose suggestions, while deterministic geometry ensures structural consistency.
+
+The MVP succeeds when an animator can generate and refine different character poses, view them from any angle they set or describe, for one or two characters, without manually rebuilding the characters' proportions each time.
+
+---
+
+APPENDIX A. CHANGE LOG: VERSIONS 1.0 TO 1.2
+
+Items 1 to 23 are issues found when comparing version 1.0 with the design notes PDF, and how version 1.1 fixes them. Items 24 to 29 are the version 1.2 camera changes.
+
+Conflicts with the design notes
+
+1. Two characters. The PDF's MVP includes posing two skeletons with a height-chart check; version 1.0 limited the MVP to one. Fix: two characters restored to the MVP (Section 11); contact pins and collision stay deferred, as the PDF's MVP list does not include them.
+2. Sketch interpretation. Version 1.0 required recognizing joints in rough hand-drawn sketches, which needs a vision model and fails the PDF's "testable without new data or models" filter. Fix: replaced by deterministic joint placement with ray-sphere depth reconstruction (Section 4.2); automatic detection deferred.
+3. Environment scope. Version 1.0 promised character-environment interactions. Fix: props are placed boxes only; interaction is manual inverse kinematics plus an overlap warning (Section 9.3).
+4. Side and three-quarter views. Version 1.0's checklist required them but its camera only tilted up and down and the skeleton had no facing. Fix in 1.1: camera azimuth and character facing added. Superseded in 1.2 by the full 360-degree camera (item 24).
+
+Gaps: in the design notes, missing from version 1.0
+
+5. Twist and facing. Fix: rotations stored as quaternions, which carry twist (Section 6.1); chest and head facing values; bend-direction rule for elbows and knees (Section 5.4).
+6. Joint list and formats. Fix: skell_v1 defined (Section 5.1); request contents (Section 10.2); output schema (Section 10.4); logging schema (Section 12.3).
+7. Intent vocabulary. Fix: intent_vocab_v1 (Section 10.3), logged with every request.
+8. Pass thresholds. Fix: 90% valid after clamping, under 20% rejected, continuity limit, and measurable geometry tests (Section 17).
+9. Uneven left/right lengths (an open item in the PDF). Fix: symmetric averaging by default, switchable (Section 4.1).
+10. Editor cues, anticipation easing, pose library with rule-based suggestions, root movement in depth. Fix: Sections 9.2, 7.3, 4.3 and 4.5.
+
+Issues in both documents
+
+11. Balance rule. "Centre of mass over the feet" misjudges kneeling, sitting and similar poses. Fix: support area from all contact joints, standard segment masses, warning only (Section 10.5). Applied to the PDF's own kneeling pose, the centre of mass is about 16 units outside the knee-to-foot support line, so it is flagged "unstable", which is plausible for a figure leaning out to reach an object. Appendix B records this as the expected result.
+12. Side labels. The PDF's kneeling pose is described as facing the camera, yet its r_ joints sit on the image right, which is the character's left. Image-side labels flip whenever a character turns and do not match motion-capture data. Fix: l_ and r_ are anatomical (Section 5.1). The PDF pose is relabeled in Appendix B without changing its geometry, so it now kneels on the left knee and reaches with the right hand, and still matches the PDF figures.
+13. No shoulders or hips. Fix: rigid shoulder and hip offsets in skell_v1; widths may be zero for compatibility (Section 5.1).
+14. Joint names in the PDF's first example (r_shoulder) did not match its own 11-joint skeleton. Fix: one joint list.
+15. World-frame directions. Rotating the spine did not carry the arms. Fix: rotations stored relative to the parent (Section 6.1); the AI still speaks yaw/pitch in the heading frame, so the PDF's numbers stay valid.
+16. Geometry duplicated in two languages. Fix: rules as shared data, golden fixtures in both CI suites, server as authority, Kotlin Multiplatform as the later consolidation (Section 12.2).
+17. Screen y-down coordinates in PDF section 9. Fix: conversion given in Appendix B; all specification data is Y-up.
+18. Interpolating exactly opposite directions, and yaw at straight up or down. Fix: quaternion Slerp with shortest-path handling; explicit conversion rules (Sections 6.3 and 7.2).
+
+Found during the revision
+
+19. Root movement. The PDF's output format had no root position, so "run toward the camera" could not be expressed. Fix: root x, z, facing and airborne flag per frame (Section 10.4).
+20. Unit scale. Camera distances assume a character about 250 units tall. Fix: reference character normalized to 250 units (Section 4.1).
+21. Grounding. Neither document said how the character's height above the floor is set. Fix: Section 5.3.
+22. Near plane. Points behind or very near the camera break the projection. Fix: near plane at 20 units with clipping (Section 8.1).
+23. Save and validate endpoints were missing for manual edits. Fix: Section 12.2.
+
+Version 1.2: 360-degree camera
+
+24. The camera views the sketch from any angle: full 360-degree azimuth, elevation from -90 to +90, roll, distance and focal length (Section 8.1). Presets became shortcuts, and the design notes' open "fourth view" is answered by the full orbit.
+25. Angles can be given relative to a character ("from behind") as well as to the world, and the AI turns spoken or written camera descriptions into camera values (Sections 8.4 and 10.4).
+26. Azimuth now uses the same sign as bone yaw (positive toward +X). Version 1.1's "side, α 90" is now "right side, α -90"; version 1.1's "three-quarter, α 45" is now "front-right three-quarter, α -45". Appendix B uses the new signs.
+27. Low and worm's-eye angles are in the MVP. The floor guard keeps the camera above the floor without changing the angle or the subject's size on screen (Section 8.3).
+28. Orbit targets, shot sizes, over-the-shoulder shots and turnaround export added (Sections 8.3 and 8.7).
+29. The AI receives the current camera, so camera-relative phrases ("run toward the camera") still produce the right bone yaw (Section 10.2).
+
+Decisions taken in versions 1.1 and 1.2 that can be reversed
+
+- Quaternions as the stored representation (the continuous-over-discrete decision itself is unchanged).
+- Floor guard on by default, keeping the angle and on-screen size by moving the camera closer.
+- Camera fixed within a shot for the MVP (no animated camera moves).
+- The phrase table values (for example "low angle" = -30 degrees, "Dutch" = 20 degrees).
+- Average, rather than mirror, for uneven left/right lengths.
+- Balance, overlap and continuity as warnings rather than rejections.
+- Reference character height of 250 units.
+- The default limit values and the 45° continuity threshold, to be tuned with animators.
+
+---
+
+APPENDIX B. REFERENCE FIXTURE AND GOLDEN TESTS
+
+B.1 Reference pose: the design notes' kneeling pose, relabeled
+
+Source: design notes sections 9 and 11. Geometry unchanged; labels converted to anatomical sides. Shoulder and hip widths 0. Head radius 19 (not given in the PDF; chosen so standing height is 250 units, about 6.6 heads). Facing 0, chest facing 0, head facing 0 (the PDF assumes the head is turned to meet the camera).
+
+Bone| Length| Yaw| Pitch| PDF label
+pelvis>neck| 90| -6| 32| spine
+neck>head| 30| -16| 61| head
+l_shoulder>l_elbow| 47| 105| -23| right upper arm
+l_elbow>l_hand| 39| 99| -21| right forearm
+r_shoulder>r_elbow| 47| -23| -50| left upper arm
+r_elbow>r_hand| 39| -12| -60| left forearm
+l_hip>l_knee| 56| 146| -40| right thigh
+l_knee>l_foot| 55| 167| 8| right shin
+r_hip>r_knee| 56| -52| 4| left thigh
+r_knee>r_foot| 55| -7| -50| left shin
+
+B.2 Expected world positions after grounding (Y-up, ground y = 0, root at x = 0, z = 0)
+
+Joint| x| y| z
+pelvis| 0.0| 38.2| 0.0
+neck| -8.0| 85.9| -75.9
+head| -12.0| 112.2| -89.9
+l_elbow| 33.8| 67.6| -64.7
+l_hand| 69.8| 53.6| -59.0
+r_elbow| -19.8| 49.9| -103.7
+r_hand| -23.8| 16.1| -122.8
+l_knee| 24.0| 2.2| 35.6
+l_foot| 36.2| 9.9| 88.6
+r_knee| -44.0| 42.1| -34.4
+r_foot| -48.3| 0.0| -69.5
+
+(Shoulder joints equal neck and hip joints equal pelvis, because the widths are 0.)
+
+These match the PDF's hand-built pose within 0.8 units. To convert the PDF's section 9 coordinates: x = x_pdf - 190, y = 262 - y_pdf + 38.2, z = z_pdf, then swap every l_ and r_ label.
+
+B.3 Expected validation result
+
+- Contacts: l_knee and r_foot.
+- Hinges: knee bends 52° (left) and 66° (right); elbow bends 6° (left) and 12° (right). All valid, none clamped.
+- Ball limits: spine 58° from up; head 30° from spine; thighs 90° (left) and 67° (right) from the forward-down axis. All valid.
+- Balance: warning "unstable" (centre of mass about 16 units outside the knee-to-foot support line).
+- Overlap and continuity: no warnings.
+
+B.4 Expected screen offsets from (cx, cy), screen y down, with scale s
+
+Target: head. Azimuths are world values; with facing 0 they equal the character-relative values. Focal length 500 unless stated.
+
+Camera| pelvis| r_hand| l_foot
+Front, eye level (az 0)| (12.0, 73.9) s 1.00| (-15.7, 127.3) s 1.33| (41.0, 86.9) s 0.85
+Elevated 30°| (11.4, 18.2) s 0.95| (-13.8, 116.0) s 1.16| (39.2, -0.6) s 0.81
+Overhead 90°| (12.4, -92.9) s 1.03| (-11.7, 32.5) s 0.99| (47.1, -174.2) s 0.98
+Distant eye level (R 820)| (6.6, 40.6) s 0.55| (-7.5, 61.0) s 0.64| (24.1, 51.2) s 0.50
+Right side (az -90)| (-106.5, 87.6) s 1.18| (41.3, 120.6) s 1.26| (-194.8, 111.6) s 1.09
+Front-right 3/4 (az -45)| (-57.1, 76.7) s 1.04| (19.7, 126.9) s 1.32| (-80.8, 89.7) s 0.88
+Left side (az +90)| (112.9, 92.9) s 1.26| (-39.0, 113.8) s 1.19| (246.7, 141.3) s 1.38
+Back-left 3/4 (az +135)| (81.5, 109.4) s 1.48| (-16.9, 108.7) s 1.13| (184.5, 204.8) s 2.00
+Back (az 180)| (-18.7, 115.5) s 1.56| (13.4, 108.4) s 1.13| (-104.2, 220.9) s 2.16
+Dutch (roll +20)| (-14.0, 73.6) s 1.00| (-58.3, 114.3) s 1.33| (8.8, 95.7) s 0.85
+Low angle -30°, floor guard on (R 214.3, F 261.4, camera 5.0 above floor)| (12.3, 111.6) s 1.02| (-22.5, 126.5) s 1.90| (39.7, 146.3) s 0.82
+Worm's-eye -75°, floor guard off (R 410, camera 283.9 below floor)| (16.6, 146.4) s 1.38| (-19.2, -11.2) s 1.62| (67.5, 278.3) s 1.40
+
+The head always lands on (cx, cy) with scale 1.22 (1.22 x 0.5 = 0.61 at R 820), including the floor-guarded low angle, which keeps the head's on-screen size. The eye-level and distant rows reproduce the design notes' figures 6 and 9 (near-to-far scale ratio 1.56 and 1.27). Version 1.1's "Side" and "Three-quarter" rows are the right-side and front-right rows here, with the new azimuth signs.
+
+B.5 Further golden fixtures to build in Milestone 2
+
+- Rest pose: standing, facing 0, non-zero shoulder and hip widths; balance passes.
+- Backward elbow: a forearm bent behind the upper arm; expected to be corrected to the nearest allowed bend, with the correction recorded.
+- Vertical bone: pitch 90 with arbitrary yaw; round trip returns the previous yaw.
+- 180° swing: a bone pointing exactly opposite its rest axis; rotation axis is the parent's lateral axis.
+- Turned character: the reference pose at facing 90; world positions equal the reference rotated 90° about the vertical axis through the root, bone yaw/pitch unchanged.
+- Camera follows facing: the reference pose at facing 90 seen from α_rel 0 renders exactly like the front eye-level row of B.4.
+- Full sphere: every azimuth (15-degree steps) and elevation (-90 to +90, 15-degree steps); camera vectors orthonormal within 1e-12 and no image flip between neighbouring steps at the poles.
+- Floor guard: the low-angle row of B.4.
+- Shot size: full shot of the standing rest pose gives R = 411.2 with a 380-unit canvas.
+- Sketch round trip: the reference pose projected at the elevated camera and reconstructed from its 2D joints; recovered within 1e-6 units, with two depth solutions offered for each of the ten bones.
+- Interpolation: Slerp between the rest pose and the reference pose at t = 0.5; every bone length exact.

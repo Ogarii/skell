@@ -1,0 +1,46 @@
+{
+  "format": "intent_vocab_v1",
+  "stance_and_locomotion": [
+    "idle",
+    "stand_up",
+    "walk",
+    "run",
+    "jump",
+    "crouch",
+    "kneel",
+    "sit",
+    "fall",
+    "get_up"
+  ],
+  "reaching_and_handling": [
+    "reach",
+    "point",
+    "pick_up",
+    "put_down",
+    "carry",
+    "push",
+    "pull",
+    "throw"
+  ],
+  "fighting": [
+    "guard",
+    "jab",
+    "cross",
+    "hook",
+    "uppercut",
+    "kick",
+    "block",
+    "dodge",
+    "recoil"
+  ],
+  "gesture": [
+    "wave",
+    "look_at"
+  ],
+  "other": [
+    "other"
+  ],
+  "notes": [
+    "Every pose request is logged with exactly one tag. Camera-only requests have request_type 'camera' and no tag."
+  ]
+}

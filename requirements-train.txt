@@ -1,0 +1,3 @@
+# Training the joint model only (ml/, run on Kaggle). The sandbox itself needs only requirements.txt.
+-r requirements.txt
+torch>=2.2

@@ -1,0 +1,658 @@
+{
+  "format": "sandbox_poses_v1",
+  "notes": [
+    "Poses for the sandbox viewer, in the spec 10.4 frame format (yaw/pitch per posable bone, heading frame). Each passes the step 6 limits unclamped and has no overlaps."
+  ],
+  "poses": [
+    {
+      "name": "standing",
+      "label": "Standing",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 90
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 90
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 90,
+            "pitch": -80
+          },
+          "l_elbow>l_hand": {
+            "yaw": 90,
+            "pitch": -85
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -90,
+            "pitch": -80
+          },
+          "r_elbow>r_hand": {
+            "yaw": -90,
+            "pitch": -85
+          },
+          "l_hip>l_knee": {
+            "yaw": 90,
+            "pitch": -86
+          },
+          "l_knee>l_foot": {
+            "yaw": 0,
+            "pitch": -90
+          },
+          "r_hip>r_knee": {
+            "yaw": -90,
+            "pitch": -86
+          },
+          "r_knee>r_foot": {
+            "yaw": 0,
+            "pitch": -90
+          }
+        }
+      }
+    },
+    {
+      "name": "t_pose",
+      "label": "T-pose",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 90
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 90
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 90,
+            "pitch": 0
+          },
+          "l_elbow>l_hand": {
+            "yaw": 90,
+            "pitch": 0
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -90,
+            "pitch": 0
+          },
+          "r_elbow>r_hand": {
+            "yaw": -90,
+            "pitch": 0
+          },
+          "l_hip>l_knee": {
+            "yaw": 90,
+            "pitch": -86
+          },
+          "l_knee>l_foot": {
+            "yaw": 0,
+            "pitch": -90
+          },
+          "r_hip>r_knee": {
+            "yaw": -90,
+            "pitch": -86
+          },
+          "r_knee>r_foot": {
+            "yaw": 0,
+            "pitch": -90
+          }
+        }
+      }
+    },
+    {
+      "name": "kneel_point",
+      "label": "Kneel, point at viewer",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 87
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 82
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 100,
+            "pitch": -78
+          },
+          "l_elbow>l_hand": {
+            "yaw": 30,
+            "pitch": -62
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -6.2,
+            "pitch": -0.7
+          },
+          "r_elbow>r_hand": {
+            "yaw": -6.2,
+            "pitch": -0.7
+          },
+          "l_hip>l_knee": {
+            "yaw": 90,
+            "pitch": -80
+          },
+          "l_knee>l_foot": {
+            "yaw": 175,
+            "pitch": -2
+          },
+          "r_hip>r_knee": {
+            "yaw": -90,
+            "pitch": -80
+          },
+          "r_knee>r_foot": {
+            "yaw": -175,
+            "pitch": -2
+          }
+        }
+      }
+    },
+    {
+      "name": "guard",
+      "label": "Guard stance",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 85
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 85
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 30,
+            "pitch": -55
+          },
+          "l_elbow>l_hand": {
+            "yaw": -10,
+            "pitch": 55
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -30,
+            "pitch": -55
+          },
+          "r_elbow>r_hand": {
+            "yaw": 10,
+            "pitch": 55
+          },
+          "l_hip>l_knee": {
+            "yaw": 20,
+            "pitch": -70
+          },
+          "l_knee>l_foot": {
+            "yaw": 170,
+            "pitch": -85
+          },
+          "r_hip>r_knee": {
+            "yaw": -160,
+            "pitch": -78
+          },
+          "r_knee>r_foot": {
+            "yaw": -170,
+            "pitch": -88
+          }
+        }
+      }
+    },
+    {
+      "name": "right_hook",
+      "label": "Throw a right hook",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": -30,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 85
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 85
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 30,
+            "pitch": -55
+          },
+          "l_elbow>l_hand": {
+            "yaw": -10,
+            "pitch": 55
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -80,
+            "pitch": 5
+          },
+          "r_elbow>r_hand": {
+            "yaw": -5,
+            "pitch": 0
+          },
+          "l_hip>l_knee": {
+            "yaw": 20,
+            "pitch": -72
+          },
+          "l_knee>l_foot": {
+            "yaw": 170,
+            "pitch": -85
+          },
+          "r_hip>r_knee": {
+            "yaw": -150,
+            "pitch": -78
+          },
+          "r_knee>r_foot": {
+            "yaw": -165,
+            "pitch": -85
+          }
+        }
+      }
+    },
+    {
+      "name": "walk",
+      "label": "Walk, mid-stride",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 88
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 88
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 175,
+            "pitch": -75
+          },
+          "l_elbow>l_hand": {
+            "yaw": 150,
+            "pitch": -80
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -5,
+            "pitch": -72
+          },
+          "r_elbow>r_hand": {
+            "yaw": 0,
+            "pitch": -55
+          },
+          "l_hip>l_knee": {
+            "yaw": 5,
+            "pitch": -70
+          },
+          "l_knee>l_foot": {
+            "yaw": 0,
+            "pitch": -88
+          },
+          "r_hip>r_knee": {
+            "yaw": 180,
+            "pitch": -72
+          },
+          "r_knee>r_foot": {
+            "yaw": 180,
+            "pitch": -81
+          }
+        }
+      }
+    },
+    {
+      "name": "run",
+      "label": "Run",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 72
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 80
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 150,
+            "pitch": -55
+          },
+          "l_elbow>l_hand": {
+            "yaw": 20,
+            "pitch": -35
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -10,
+            "pitch": -55
+          },
+          "r_elbow>r_hand": {
+            "yaw": 0,
+            "pitch": 30
+          },
+          "l_hip>l_knee": {
+            "yaw": 0,
+            "pitch": -25
+          },
+          "l_knee>l_foot": {
+            "yaw": 180,
+            "pitch": -75
+          },
+          "r_hip>r_knee": {
+            "yaw": 180,
+            "pitch": -55
+          },
+          "r_knee>r_foot": {
+            "yaw": 180,
+            "pitch": -5
+          }
+        }
+      }
+    },
+    {
+      "name": "squat",
+      "label": "Squat",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 60
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 80
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 10,
+            "pitch": -15
+          },
+          "l_elbow>l_hand": {
+            "yaw": 5,
+            "pitch": -5
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -10,
+            "pitch": -15
+          },
+          "r_elbow>r_hand": {
+            "yaw": -5,
+            "pitch": -5
+          },
+          "l_hip>l_knee": {
+            "yaw": 25,
+            "pitch": -15
+          },
+          "l_knee>l_foot": {
+            "yaw": 165,
+            "pitch": -70
+          },
+          "r_hip>r_knee": {
+            "yaw": -25,
+            "pitch": -15
+          },
+          "r_knee>r_foot": {
+            "yaw": -165,
+            "pitch": -70
+          }
+        }
+      }
+    },
+    {
+      "name": "sit_floor",
+      "label": "Sit on the floor",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 180,
+            "pitch": 70
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 85
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 150,
+            "pitch": -75
+          },
+          "l_elbow>l_hand": {
+            "yaw": 160,
+            "pitch": -80
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -150,
+            "pitch": -75
+          },
+          "r_elbow>r_hand": {
+            "yaw": -160,
+            "pitch": -80
+          },
+          "l_hip>l_knee": {
+            "yaw": 15,
+            "pitch": 30
+          },
+          "l_knee>l_foot": {
+            "yaw": 10,
+            "pitch": -30
+          },
+          "r_hip>r_knee": {
+            "yaw": -15,
+            "pitch": 30
+          },
+          "r_knee>r_foot": {
+            "yaw": -10,
+            "pitch": -30
+          }
+        }
+      }
+    },
+    {
+      "name": "reach_up",
+      "label": "Reach up",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": false,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 90
+          },
+          "neck>head": {
+            "yaw": 180,
+            "pitch": 80
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 15,
+            "pitch": 75
+          },
+          "l_elbow>l_hand": {
+            "yaw": 10,
+            "pitch": 85
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -15,
+            "pitch": 75
+          },
+          "r_elbow>r_hand": {
+            "yaw": -10,
+            "pitch": 85
+          },
+          "l_hip>l_knee": {
+            "yaw": 90,
+            "pitch": -86
+          },
+          "l_knee>l_foot": {
+            "yaw": 0,
+            "pitch": -90
+          },
+          "r_hip>r_knee": {
+            "yaw": -90,
+            "pitch": -86
+          },
+          "r_knee>r_foot": {
+            "yaw": 0,
+            "pitch": -90
+          }
+        }
+      }
+    },
+    {
+      "name": "jump",
+      "label": "Jump (airborne)",
+      "frame": {
+        "t": 1,
+        "root": {
+          "x": 0,
+          "z": 0,
+          "facing": 0,
+          "y": 140
+        },
+        "facing": {
+          "chest": 0,
+          "head": 0
+        },
+        "airborne": true,
+        "pose": {
+          "pelvis>neck": {
+            "yaw": 0,
+            "pitch": 80
+          },
+          "neck>head": {
+            "yaw": 0,
+            "pitch": 85
+          },
+          "l_shoulder>l_elbow": {
+            "yaw": 30,
+            "pitch": 60
+          },
+          "l_elbow>l_hand": {
+            "yaw": 20,
+            "pitch": 80
+          },
+          "r_shoulder>r_elbow": {
+            "yaw": -30,
+            "pitch": 60
+          },
+          "r_elbow>r_hand": {
+            "yaw": -20,
+            "pitch": 80
+          },
+          "l_hip>l_knee": {
+            "yaw": 10,
+            "pitch": -20
+          },
+          "l_knee>l_foot": {
+            "yaw": 170,
+            "pitch": -60
+          },
+          "r_hip>r_knee": {
+            "yaw": -10,
+            "pitch": -20
+          },
+          "r_knee>r_foot": {
+            "yaw": -170,
+            "pitch": -60
+          }
+        }
+      }
+    }
+  ]
+}

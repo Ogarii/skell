@@ -1,0 +1,332 @@
+{
+  "format": "skell_v1",
+  "name": "reference_character",
+  "notes": [
+    "Reference character from the design notes. Rest pose: standing, facing 0 (front toward -Z), limbs hanging down.",
+    "Bones are listed parent before child. rest_axis is the bone direction in the rest pose (world == heading frame at facing 0).",
+    "Anatomical sides: l_ is the character's left, which is +X (image right) at facing 0.",
+    "Shoulder and hip half-widths are 0 here so the skeleton reproduces the design notes' 11-joint figure."
+  ],
+  "root": "pelvis",
+  "joints": [
+    "pelvis",
+    "neck",
+    "head",
+    "l_shoulder",
+    "l_elbow",
+    "l_hand",
+    "r_shoulder",
+    "r_elbow",
+    "r_hand",
+    "l_hip",
+    "l_knee",
+    "l_foot",
+    "r_hip",
+    "r_knee",
+    "r_foot"
+  ],
+  "head_radius": 19,
+  "standing_height": 250,
+  "symmetric": true,
+  "reference_character": true,
+  "bones": [
+    {
+      "id": "pelvis>neck",
+      "from": "pelvis",
+      "to": "neck",
+      "length": 90,
+      "kind": "posable",
+      "parent_bone": null,
+      "rest_axis": [
+        0,
+        1,
+        0
+      ],
+      "limit": {
+        "type": "ball",
+        "frame": "pelvis_heading",
+        "cone_axis_yaw_pitch": [
+          0,
+          90
+        ],
+        "cone_half_angle": 100,
+        "twist": [
+          -45,
+          45
+        ]
+      },
+      "label": "spine"
+    },
+    {
+      "id": "neck>head",
+      "from": "neck",
+      "to": "head",
+      "length": 30,
+      "kind": "posable",
+      "parent_bone": "pelvis>neck",
+      "rest_axis": [
+        0,
+        1,
+        0
+      ],
+      "limit": {
+        "type": "ball",
+        "frame": "parent_direction",
+        "cone_half_angle": 75,
+        "twist": [
+          -80,
+          80
+        ]
+      },
+      "label": "head"
+    },
+    {
+      "id": "neck>l_shoulder",
+      "from": "neck",
+      "to": "l_shoulder",
+      "length": 0,
+      "kind": "rigid",
+      "parent_bone": "pelvis>neck",
+      "rest_axis": [
+        1,
+        0,
+        0
+      ],
+      "limit": null,
+      "label": "left shoulder offset (half shoulder width)"
+    },
+    {
+      "id": "l_shoulder>l_elbow",
+      "from": "l_shoulder",
+      "to": "l_elbow",
+      "length": 47,
+      "kind": "posable",
+      "parent_bone": "neck>l_shoulder",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "ball",
+        "frame": "chest",
+        "cone_half_angle": 180,
+        "rotation_range": [
+          -90,
+          90
+        ]
+      },
+      "label": "left upper arm"
+    },
+    {
+      "id": "l_elbow>l_hand",
+      "from": "l_elbow",
+      "to": "l_hand",
+      "length": 39,
+      "kind": "posable",
+      "parent_bone": "l_shoulder>l_elbow",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "hinge",
+        "bend": [
+          0,
+          155
+        ],
+        "folds_toward": "front"
+      },
+      "label": "left forearm"
+    },
+    {
+      "id": "neck>r_shoulder",
+      "from": "neck",
+      "to": "r_shoulder",
+      "length": 0,
+      "kind": "rigid",
+      "parent_bone": "pelvis>neck",
+      "rest_axis": [
+        -1,
+        0,
+        0
+      ],
+      "limit": null,
+      "label": "right shoulder offset (half shoulder width)"
+    },
+    {
+      "id": "r_shoulder>r_elbow",
+      "from": "r_shoulder",
+      "to": "r_elbow",
+      "length": 47,
+      "kind": "posable",
+      "parent_bone": "neck>r_shoulder",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "ball",
+        "frame": "chest",
+        "cone_half_angle": 180,
+        "rotation_range": [
+          -90,
+          90
+        ]
+      },
+      "label": "right upper arm"
+    },
+    {
+      "id": "r_elbow>r_hand",
+      "from": "r_elbow",
+      "to": "r_hand",
+      "length": 39,
+      "kind": "posable",
+      "parent_bone": "r_shoulder>r_elbow",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "hinge",
+        "bend": [
+          0,
+          155
+        ],
+        "folds_toward": "front"
+      },
+      "label": "right forearm"
+    },
+    {
+      "id": "pelvis>l_hip",
+      "from": "pelvis",
+      "to": "l_hip",
+      "length": 0,
+      "kind": "rigid",
+      "parent_bone": null,
+      "rest_axis": [
+        1,
+        0,
+        0
+      ],
+      "limit": null,
+      "label": "left hip offset (half hip width)"
+    },
+    {
+      "id": "l_hip>l_knee",
+      "from": "l_hip",
+      "to": "l_knee",
+      "length": 56,
+      "kind": "posable",
+      "parent_bone": "pelvis>l_hip",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "ball",
+        "frame": "pelvis_heading",
+        "cone_axis_yaw_pitch": [
+          0,
+          -45
+        ],
+        "cone_half_angle": 105,
+        "rotation_range": [
+          -60,
+          60
+        ]
+      },
+      "label": "left thigh"
+    },
+    {
+      "id": "l_knee>l_foot",
+      "from": "l_knee",
+      "to": "l_foot",
+      "length": 55,
+      "kind": "posable",
+      "parent_bone": "l_hip>l_knee",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "hinge",
+        "bend": [
+          0,
+          160
+        ],
+        "folds_toward": "back"
+      },
+      "label": "left shin"
+    },
+    {
+      "id": "pelvis>r_hip",
+      "from": "pelvis",
+      "to": "r_hip",
+      "length": 0,
+      "kind": "rigid",
+      "parent_bone": null,
+      "rest_axis": [
+        -1,
+        0,
+        0
+      ],
+      "limit": null,
+      "label": "right hip offset (half hip width)"
+    },
+    {
+      "id": "r_hip>r_knee",
+      "from": "r_hip",
+      "to": "r_knee",
+      "length": 56,
+      "kind": "posable",
+      "parent_bone": "pelvis>r_hip",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "ball",
+        "frame": "pelvis_heading",
+        "cone_axis_yaw_pitch": [
+          0,
+          -45
+        ],
+        "cone_half_angle": 105,
+        "rotation_range": [
+          -60,
+          60
+        ]
+      },
+      "label": "right thigh"
+    },
+    {
+      "id": "r_knee>r_foot",
+      "from": "r_knee",
+      "to": "r_foot",
+      "length": 55,
+      "kind": "posable",
+      "parent_bone": "r_hip>r_knee",
+      "rest_axis": [
+        0,
+        -1,
+        0
+      ],
+      "limit": {
+        "type": "hinge",
+        "bend": [
+          0,
+          160
+        ],
+        "folds_toward": "back"
+      },
+      "label": "right shin"
+    }
+  ]
+}

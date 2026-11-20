@@ -1,0 +1,69 @@
+{
+  "request_type": "pose",
+  "intent": {
+    "tag": "pick_up",
+    "text": "kneel and pick up the box"
+  },
+  "options": [
+    {
+      "label": "Kneel on left knee, right hand reaches the box",
+      "frames": [
+        {
+          "t": 1,
+          "root": {
+            "x": 0,
+            "z": 0,
+            "facing": 0
+          },
+          "facing": {
+            "chest": 0,
+            "head": 0
+          },
+          "airborne": false,
+          "pose": {
+            "pelvis>neck": {
+              "yaw": -6,
+              "pitch": 32
+            },
+            "neck>head": {
+              "yaw": -16,
+              "pitch": 61
+            },
+            "l_shoulder>l_elbow": {
+              "yaw": 105,
+              "pitch": -23
+            },
+            "l_elbow>l_hand": {
+              "yaw": 99,
+              "pitch": -21
+            },
+            "r_shoulder>r_elbow": {
+              "yaw": -23,
+              "pitch": -50
+            },
+            "r_elbow>r_hand": {
+              "yaw": -12,
+              "pitch": -60
+            },
+            "l_hip>l_knee": {
+              "yaw": 146,
+              "pitch": -40
+            },
+            "l_knee>l_foot": {
+              "yaw": 167,
+              "pitch": 8
+            },
+            "r_hip>r_knee": {
+              "yaw": -52,
+              "pitch": 4
+            },
+            "r_knee>r_foot": {
+              "yaw": -7,
+              "pitch": -50
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

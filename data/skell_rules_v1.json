@@ -1,0 +1,167 @@
+{
+  "format": "skell_rules_v1",
+  "notes": [
+    "Shared rule data read by every geometry implementation (spec 12.2). Change values here, never in code."
+  ],
+  "units": {
+    "reference_standing_height": 250
+  },
+  "grounding": {
+    "contact_tolerance_frac_height": 0.02
+  },
+  "limits": {
+    "hinge_plane_min_bend_deg": 20,
+    "limb_twist_reference_yaw_pitch": [
+      0,
+      -45
+    ],
+    "setup_drawn_length_tolerance_frac": 0.02
+  },
+  "balance": {
+    "mass_fractions": {
+      "head": 0.081,
+      "trunk": 0.497,
+      "upper_arm": 0.028,
+      "forearm_hand": 0.022,
+      "thigh": 0.1,
+      "shin_foot": 0.061
+    },
+    "segment_com": "midpoint (head at head joint)",
+    "segments": {
+      "trunk": ["pelvis>neck"],
+      "upper_arm": ["l_shoulder>l_elbow", "r_shoulder>r_elbow"],
+      "forearm_hand": ["l_elbow>l_hand", "r_elbow>r_hand"],
+      "thigh": ["l_hip>l_knee", "r_hip>r_knee"],
+      "shin_foot": ["l_knee>l_foot", "r_knee>r_foot"]
+    },
+    "head_joint": "head",
+    "foot_joints": ["l_foot", "r_foot"],
+    "support_widen_frac_height": {
+      "foot": 0.04,
+      "other": 0.02
+    },
+    "severity": "warning"
+  },
+  "overlap": {
+    "min_clearance_frac_height": 0.01,
+    "severity": "warning"
+  },
+  "continuity": {
+    "max_bone_rotation_deg_per_frame": 45,
+    "fps": 24,
+    "severity": "warning"
+  },
+  "camera": {
+    "default_focal": 500,
+    "focal_range": [
+      150,
+      2000
+    ],
+    "min_distance": 30,
+    "near_plane": 20,
+    "floor_clearance_frac_height": 0.02,
+    "floor_guard_default": true,
+    "canvas_height": 380,
+    "canvas_width": 570,
+    "shot_fill": 0.8,
+    "snap_deg": 15,
+    "grid_half_extent": 1000,
+    "shots": {
+      "extreme_wide": {
+        "framed": "4x_height",
+        "target": "bbox_centre"
+      },
+      "wide": {
+        "framed": "2x_height",
+        "target": "bbox_centre"
+      },
+      "full": {
+        "framed": "bbox",
+        "target": "bbox_centre"
+      },
+      "medium": {
+        "framed": "pelvis_to_head_top",
+        "target": "region_midpoint"
+      },
+      "close_up": {
+        "framed": "neck_to_head_top",
+        "target": "head"
+      }
+    },
+    "over_the_shoulder": {
+      "behind_shoulder_frac_height": 0.15,
+      "above_shoulder_frac_height": 0.05
+    },
+    "presets": {
+      "front": {
+        "azimuth_rel": 0
+      },
+      "front_left_three_quarter": {
+        "azimuth_rel": 45
+      },
+      "left_side": {
+        "azimuth_rel": 90
+      },
+      "back_left_three_quarter": {
+        "azimuth_rel": 135
+      },
+      "back": {
+        "azimuth_rel": 180
+      },
+      "back_right_three_quarter": {
+        "azimuth_rel": -135
+      },
+      "right_side": {
+        "azimuth_rel": -90
+      },
+      "front_right_three_quarter": {
+        "azimuth_rel": -45
+      },
+      "eye_level": {
+        "elevation": 0,
+        "distance": 410
+      },
+      "elevated": {
+        "elevation": 30,
+        "distance": 410
+      },
+      "overhead": {
+        "elevation": 90,
+        "distance": 410
+      },
+      "low_angle": {
+        "elevation": -30,
+        "distance": 410
+      },
+      "worms_eye": {
+        "elevation": -75,
+        "distance": 410
+      },
+      "distant_eye_level": {
+        "elevation": 0,
+        "distance": 820
+      },
+      "dutch": {
+        "roll": 20
+      }
+    }
+  },
+  "sketch": {
+    "gesture_keep_short_frac": 0.6
+  },
+  "render": {
+    "flat_tilt_deg": 15,
+    "grid_step": 50
+  },
+  "easing": {
+    "anticipation_k": 1.70158
+  },
+  "ai": {
+    "options_per_request": [
+      3,
+      4
+    ],
+    "angle_rounding_deg": 5,
+    "retries_on_hard_error": 1
+  }
+}
